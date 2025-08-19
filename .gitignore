@@ -1,0 +1,22 @@
+# Ignore Visual Studio temporary files
+.vs/
+*.user
+*.suo
+
+# Build results
+bin/
+obj/
+
+# ASP.NET Core secrets
+**/appsettings.*.json
+
+# Logs
+*.log
+
+# Publish output
+publish/
+
+# Others
+*.DS_Store
+*.env
+
