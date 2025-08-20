@@ -7,7 +7,7 @@ namespace Library_Borrowing_Books.Api.Controllers
 {
     [Route("api/[controller]")]
     [ApiController]
-  //  [Authorize(Roles = "Admin")]
+    [Authorize(Roles = "Admin")]
 
     public class UserManagementController : ControllerBase
     {
