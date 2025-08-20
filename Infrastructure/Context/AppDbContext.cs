@@ -21,7 +21,9 @@ namespace Infrastructure.Context
         {
             modelBuilder.ApplyConfigurationsFromAssembly(typeof(AppDbContext).Assembly);
 
+
             base.OnModelCreating(modelBuilder);
+
         }
 
         public DbSet<Book> Books { get; set; }

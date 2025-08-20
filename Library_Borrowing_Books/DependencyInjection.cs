@@ -42,7 +42,7 @@ namespace Library_Borrowing_Books.Api
 
         public static IServiceCollection AddDataBaseServices(this IServiceCollection services, IConfiguration configuration)
         {
-            services.AddIdentity<ApplicationUser, IdentityRole>(options =>
+            services.AddIdentity<ApplicationUser, ApplicationRole>(options =>
             {
                 options.Password.RequireDigit = false;
                 options.Password.RequireUppercase = false;

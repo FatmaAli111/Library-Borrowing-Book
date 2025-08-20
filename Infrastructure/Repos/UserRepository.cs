@@ -23,12 +23,12 @@ namespace DataAcess.Repos
     public class userRepository :GenericRepository<ApplicationUser>, IUserRepository
     {
         private readonly UserManager<ApplicationUser> userManager;
-        private readonly RoleManager<IdentityRole> roleManager;
+        private readonly RoleManager<ApplicationRole> roleManager;
         private readonly AppDbContext context;
 
        
 
-        public userRepository(AppDbContext db,  UserManager<ApplicationUser> userManager,  RoleManager<IdentityRole> roleManager) : base(db)
+        public userRepository(AppDbContext db,  UserManager<ApplicationUser> userManager,  RoleManager<ApplicationRole> roleManager) : base(db)
         {
             this.context = db;
             this.userManager = userManager;
@@ -43,7 +43,7 @@ namespace DataAcess.Repos
 
             if (!await roleManager.RoleExistsAsync("ADMIN"))
             {
-                 await roleManager.CreateAsync(new IdentityRole("ADMIN"));
+                 await roleManager.CreateAsync(new ApplicationRole("ADMIN"));
             }
             IdentityResult result= await userManager.AddToRoleAsync(user, "ADMIN");
 
@@ -152,7 +152,7 @@ namespace DataAcess.Repos
 
                     if (!await roleManager.RoleExistsAsync("User"))
                     {
-                        await roleManager.CreateAsync(new IdentityRole("User"));
+                        await roleManager.CreateAsync(new ApplicationRole("User"));
                     }
 
                     await userManager.AddToRoleAsync(GetUser, "User");

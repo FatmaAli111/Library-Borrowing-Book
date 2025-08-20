@@ -1,6 +1,7 @@
 using Data.Entities;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.EntityFrameworkCore.Metadata.Builders;
+using SurveyBasket.Abstractions.Const;
 
 namespace Infrastructure.Context.EntityConfig
 {
@@ -34,7 +35,22 @@ namespace Infrastructure.Context.EntityConfig
             builder.HasMany(u => u.Checkouts)
                    .WithOne(c => c.User)
                    .HasForeignKey(c => c.UserID)
-                   .OnDelete(DeleteBehavior.Cascade); 
+                   .OnDelete(DeleteBehavior.Cascade);
+
+            builder.HasData(new ApplicationUser
+            {
+                Id = DefaultUser.AdminId,
+                FirstName = "Librerian",
+                LastName = "Admin",
+                UserName = DefaultUser.AdminEmail,
+                NormalizedUserName = DefaultUser.AdminEmail.ToUpper(),
+                Email = DefaultUser.AdminEmail,
+                NormalizedEmail = DefaultUser.AdminEmail.ToUpper(),
+                SecurityStamp = DefaultUser.AdminSecurity,
+                ConcurrencyStamp = DefaultUser.AdminCouurency,
+                EmailConfirmed = true,
+                PasswordHash = "AQAAAAIAAYagAAAAEFoBZtZrBXuTETtpN2af//gQ1MSZXe55JL1W9DvO/E9344/QpahxmhAMcjCkA7Zrqg=="
+            });
         }
     }
 }

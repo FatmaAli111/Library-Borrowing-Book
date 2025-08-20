@@ -24,6 +24,7 @@ namespace Library_Borrowing_Books
 
 
             builder.Services.AddScoped(typeof(IGenericRepository<>), typeof(GenericRepository<>));
+           
             builder.Services.AddScoped<IUserRepository, userRepository>();
 
 
@@ -35,6 +36,8 @@ namespace Library_Borrowing_Books
                 app.MapOpenApi();
                 app.UseSwagger();
                 app.UseSwaggerUI();
+              
+                
                 using (var scope = app.Services.CreateScope())
                 {
                     var db = scope.ServiceProvider.GetRequiredService<AppDbContext>();

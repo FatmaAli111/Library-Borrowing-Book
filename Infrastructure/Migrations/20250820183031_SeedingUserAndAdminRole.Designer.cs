@@ -12,8 +12,8 @@ using Microsoft.EntityFrameworkCore.Storage.ValueConversion;
 namespace Infrastructure.Migrations
 {
     [DbContext(typeof(AppDbContext))]
-    [Migration("20250713032214_new2")]
-    partial class new2
+    [Migration("20250820183031_SeedingUserAndAdminRole")]
+    partial class SeedingUserAndAdminRole
     {
         /// <inheritdoc />
         protected override void BuildTargetModel(ModelBuilder modelBuilder)
@@ -114,6 +114,29 @@ namespace Infrastructure.Migrations
                         .HasFilter("[NormalizedUserName] IS NOT NULL");
 
                     b.ToTable("AspNetUsers", (string)null);
+
+                    b.HasData(
+                        new
+                        {
+                            Id = "019791ae-3c34-726a-8b42-c4b2a8f511ed",
+                            AccessFailedCount = 0,
+                            Address = "",
+                            ConcurrencyStamp = "019791af89de76b5928115f69be7e708",
+                            Email = "Admin@Library.com",
+                            EmailConfirmed = true,
+                            FirstName = "Survey Basket",
+                            LastName = "Admin",
+                            LockoutEnabled = false,
+                            MembershipStatus = "",
+                            MembershipType = "",
+                            NormalizedEmail = "ADMIN@LIBRARY.COM",
+                            NormalizedUserName = "ADMIN@LIBRARY.COM",
+                            PasswordHash = "AQAAAAIAAYagAAAAEFoBZtZrBXuTETtpN2af//gQ1MSZXe55JL1W9DvO/E9344/QpahxmhAMcjCkA7Zrqg==",
+                            PhoneNumberConfirmed = false,
+                            SecurityStamp = "019791af-20da-7916-a88b-06f1dbc5ab92",
+                            TwoFactorEnabled = false,
+                            UserName = "Admin@Library.com"
+                        });
                 });
 
             modelBuilder.Entity("Data.Entities.Book", b =>
@@ -129,6 +152,9 @@ namespace Infrastructure.Migrations
                         .HasMaxLength(100)
                         .HasColumnType("nvarchar(100)");
 
+                    b.Property<int>("CategoryId")
+                        .HasColumnType("int");
+
                     b.Property<string>("ISBN")
                         .IsRequired()
                         .HasMaxLength(32)
@@ -141,10 +167,30 @@ namespace Infrastructure.Migrations
 
                     b.HasKey("Id");
 
+                    b.HasIndex("CategoryId");
+
                     b.HasIndex("ISBN")
                         .IsUnique();
 
                     b.ToTable("Books");
+                });
+
+            modelBuilder.Entity("Data.Entities.Category", b =>
+                {
+                    b.Property<int>("Id")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("int");
+
+                    SqlServerPropertyBuilderExtensions.UseIdentityColumn(b.Property<int>("Id"));
+
+                    b.Property<string>("Name")
+                        .IsRequired()
+                        .HasMaxLength(100)
+                        .HasColumnType("nvarchar(100)");
+
+                    b.HasKey("Id");
+
+                    b.ToTable("Category");
                 });
 
             modelBuilder.Entity("Data.Entities.Checkout", b =>
@@ -263,6 +309,11 @@ namespace Infrastructure.Migrations
                         .IsConcurrencyToken()
                         .HasColumnType("nvarchar(max)");
 
+                    b.Property<string>("Discriminator")
+                        .IsRequired()
+                        .HasMaxLength(21)
+                        .HasColumnType("nvarchar(21)");
+
                     b.Property<string>("Name")
                         .HasMaxLength(256)
                         .HasColumnType("nvarchar(256)");
@@ -279,6 +330,10 @@ namespace Infrastructure.Migrations
                         .HasFilter("[NormalizedName] IS NOT NULL");
 
                     b.ToTable("AspNetRoles", (string)null);
+
+                    b.HasDiscriminator().HasValue("IdentityRole");
+
+                    b.UseTphMappingStrategy();
                 });
 
             modelBuilder.Entity("Microsoft.AspNetCore.Identity.IdentityRoleClaim<string>", b =>
@@ -387,6 +442,45 @@ namespace Infrastructure.Migrations
                     b.ToTable("AspNetUserTokens", (string)null);
                 });
 
+            modelBuilder.Entity("Data.Entities.ApplicationRole", b =>
+                {
+                    b.HasBaseType("Microsoft.AspNetCore.Identity.IdentityRole");
+
+                    b.Property<bool>("IsDefault")
+                        .HasColumnType("bit");
+
+                    b.HasDiscriminator().HasValue("ApplicationRole");
+
+                    b.HasData(
+                        new
+                        {
+                            Id = "019791d7-92ab-7022-8774-1eecdba1f2a2",
+                            ConcurrencyStamp = "019791d9c60a7d889dab3f7809e740f3",
+                            Name = "Admin",
+                            NormalizedName = "ADMIN",
+                            IsDefault = false
+                        },
+                        new
+                        {
+                            Id = "019791d7-da52-70db-96ec-87c909bc811a",
+                            ConcurrencyStamp = "019791d864df7179a5d6d15c06eb1e83",
+                            Name = "Member",
+                            NormalizedName = "MEMBER",
+                            IsDefault = true
+                        });
+                });
+
+            modelBuilder.Entity("Data.Entities.Book", b =>
+                {
+                    b.HasOne("Data.Entities.Category", "Category")
+                        .WithMany("Books")
+                        .HasForeignKey("CategoryId")
+                        .OnDelete(DeleteBehavior.Cascade)
+                        .IsRequired();
+
+                    b.Navigation("Category");
+                });
+
             modelBuilder.Entity("Data.Entities.Checkout", b =>
                 {
                     b.HasOne("Data.Entities.Data.Entities.BookCopy", "BookCopy")
@@ -487,6 +581,11 @@ namespace Infrastructure.Migrations
             modelBuilder.Entity("Data.Entities.Book", b =>
                 {
                     b.Navigation("BookCopies");
+                });
+
+            modelBuilder.Entity("Data.Entities.Category", b =>
+                {
+                    b.Navigation("Books");
                 });
 
             modelBuilder.Entity("Data.Entities.Checkout", b =>
