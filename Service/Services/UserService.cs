@@ -1,4 +1,4 @@
-﻿using Core.Results.Application.Common;
+using Core.Results.Application.Common;
 using Data.Entities;
 using DataAcess.Repos;
 using Infrastructure;
@@ -21,13 +21,9 @@ namespace Service.Services
             unitOfWork = UnitOfWork;
         }
 
-        public Task<bool> AssignRoleToUserAsync(string userId, string role)
+        public async Task<bool> AssignRoleToUserAsync(string userId, string role)
         {
-
-            var result = unitOfWork.UserRepository.AssignRoleToUserAsync(userId, role);
-            
-            return result;
-
+            return await unitOfWork.UserRepository.AssignRoleToUserAsync(userId, role);
         }
 
         public async Task<bool> DeleteUserAsync(string userId)

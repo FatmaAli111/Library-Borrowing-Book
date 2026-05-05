@@ -1,4 +1,4 @@
-﻿using DataAcess.Repos.IRepos;
+using DataAcess.Repos.IRepos;
 using Microsoft.AspNetCore.Identity;
 using Microsoft.Extensions.Configuration;
 using Microsoft.IdentityModel.Tokens;
@@ -25,28 +25,30 @@ namespace DataAcess.Repos
         private readonly UserManager<ApplicationUser> userManager;
         private readonly RoleManager<ApplicationRole> roleManager;
         private readonly AppDbContext context;
+        private readonly IConfiguration configuration;
 
-       
-
-        public userRepository(AppDbContext db,  UserManager<ApplicationUser> userManager,  RoleManager<ApplicationRole> roleManager) : base(db)
+        public userRepository(
+            AppDbContext db,
+            UserManager<ApplicationUser> userManager,
+            RoleManager<ApplicationRole> roleManager,
+            IConfiguration configuration) : base(db)
         {
             this.context = db;
             this.userManager = userManager;
             this.roleManager = roleManager;
-
-
+            this.configuration = configuration;
         }
+
         public async Task<bool> AssignRoleToUserAsync(string userId, string role)
         {
             var user = await userManager.FindByIdAsync(userId);
-            if (user == null) return false;
+            if (user == null || string.IsNullOrWhiteSpace(role))
+                return false;
 
-            if (!await roleManager.RoleExistsAsync("ADMIN"))
-            {
-                 await roleManager.CreateAsync(new ApplicationRole("ADMIN"));
-            }
-            IdentityResult result= await userManager.AddToRoleAsync(user, "ADMIN");
+            if (!await roleManager.RoleExistsAsync(role))
+                await roleManager.CreateAsync(new ApplicationRole(role));
 
+            var result = await userManager.AddToRoleAsync(user, role);
             return result.Succeeded;
         }
 
@@ -84,29 +86,54 @@ namespace DataAcess.Repos
             return matchUsername == null;
         }
 
-        public async Task<LoginResponseDTO> Login(LoginDTO loginDTO)
+        public async Task<LoginResultDto> Login(LoginDTO loginDTO)
         {
             var user = await userManager.FindByEmailAsync(loginDTO.Email);
             if (user == null || !await userManager.CheckPasswordAsync(user, loginDTO.Password))
             {
-                return null;
+                return new LoginResultDto { Failure = LoginFailureKind.InvalidCredentials };
             }
 
+            var requireConfirm = configuration.GetValue("EmailSettings:RequireConfirmationForLogin", true);
+            if (requireConfirm && !user.EmailConfirmed)
+            {
+                return new LoginResultDto { Failure = LoginFailureKind.EmailNotConfirmed };
+            }
+
+            var response = await BuildLoginResponseAsync(user);
+            return new LoginResultDto
+            {
+                Success = response,
+                Failure = LoginFailureKind.None
+            };
+        }
+
+        private async Task<LoginResponseDTO> BuildLoginResponseAsync(ApplicationUser user)
+        {
             var userRoles = await userManager.GetRolesAsync(user);
 
+            var issuer = configuration["ApiSettings:Issuer"] ?? "LibraryBorrowingBooks";
+            var audience = configuration["ApiSettings:Audience"] ?? "LibraryBorrowingBooksClients";
+            var secret = configuration["ApiSettings:Secret"]
+                ?? throw new InvalidOperationException("ApiSettings:Secret is not configured.");
+
+            var signingKey = new SymmetricSecurityKey(Encoding.UTF8.GetBytes(secret));
+            var credentials = new SigningCredentials(signingKey, SecurityAlgorithms.HmacSha256);
+
             var claims = new List<Claim>
-    {
-        new Claim(ClaimTypes.NameIdentifier, user.Id),
-        new Claim(JwtRegisteredClaimNames.Jti, Guid.NewGuid().ToString()),
-        new Claim(ClaimTypes.Name, user.UserName)
-    };
+            {
+                new Claim(ClaimTypes.NameIdentifier, user.Id),
+                new Claim(JwtRegisteredClaimNames.Jti, Guid.NewGuid().ToString()),
+                new Claim(ClaimTypes.Name, user.UserName ?? user.Email ?? user.Id)
+            };
             claims.AddRange(userRoles.Select(r => new Claim(ClaimTypes.Role, r)));
 
-
             var token = new JwtSecurityToken(
+                issuer: issuer,
+                audience: audience,
                 claims: claims,
-                expires: DateTime.UtcNow.AddDays(7)
-                );
+                expires: DateTime.UtcNow.AddDays(7),
+                signingCredentials: credentials);
             return new LoginResponseDTO
             {
                 Token = new JwtSecurityTokenHandler().WriteToken(token),
@@ -114,7 +141,7 @@ namespace DataAcess.Repos
                 {
                     UserName = user.UserName,
                     Name = $"{user.FirstName} {user.LastName}",
-                    Email = user.Email
+                    Email = user.Email ?? string.Empty
                 }
             };
         }
@@ -143,19 +170,19 @@ namespace DataAcess.Repos
                    
                     userDTO = new UserDTO
                     {
+                        Id = user.Id,
                         UserName = user.UserName,
                         Name = $"{user.FirstName} {user.LastName}",
-                        Email = user.Email
+                        Email = user.Email ?? string.Empty
                     };
 
                     var GetUser = await userManager.FindByEmailAsync(registerDto.Email);
 
-                    if (!await roleManager.RoleExistsAsync("User"))
-                    {
-                        await roleManager.CreateAsync(new ApplicationRole("User"));
-                    }
+                    if (!await roleManager.RoleExistsAsync("Member"))
+                        await roleManager.CreateAsync(new ApplicationRole("Member"));
 
-                    await userManager.AddToRoleAsync(GetUser, "User");
+                    if (GetUser != null)
+                        await userManager.AddToRoleAsync(GetUser, "Member");
                 }
                 else
                 {

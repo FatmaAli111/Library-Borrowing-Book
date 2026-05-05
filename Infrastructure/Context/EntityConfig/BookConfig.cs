@@ -14,11 +14,13 @@ namespace Infrastructure.Context.EntityConfig
             builder.Property(b => b.ISBN).IsRequired().HasMaxLength(32);
             builder.HasIndex(b => b.ISBN)
              .IsUnique();
+            builder.HasOne(b => b.Category).WithMany(c => c.Books)
+                .HasForeignKey(fk => fk.CategoryId).OnDelete(DeleteBehavior.Cascade);
 
-            builder.HasMany(b => b.BookCopies)
-                   .WithOne(bc => bc.Book)
-                   .HasForeignKey(bc => bc.BookId)
-                   .OnDelete(DeleteBehavior.Cascade);
+            //builder.HasMany(b => b.BookCopies)
+            //       .WithOne(bc => bc.Book)
+            //       .HasForeignKey(bc => bc.BookId)
+            //       .OnDelete(DeleteBehavior.Cascade);
         }
     }
 }

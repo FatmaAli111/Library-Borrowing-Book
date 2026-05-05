@@ -1,4 +1,4 @@
-﻿using Data.Dtos;
+using Data.Dtos;
 using Data.Entities;
 using Infrastructure.Repos.Interfaces;
 using Models.DTOs.Auth;
@@ -14,7 +14,7 @@ namespace DataAcess.Repos.IRepos
     public interface IUserRepository : IGenericRepository<ApplicationUser>
     {
         Task<bool> IsUniqueUserName(string username);
-        Task<LoginResponseDTO> Login(LoginDTO loginDTO);
+        Task<LoginResultDto> Login(LoginDTO loginDTO);
         Task<UserDTO> Register(RegisterDto registerDTO);
         Task<ApplicationUser> GetUserByID(string userID);
         Task<ApplicationUser> GetUserByEmailAsync(RegisterDto registerDto) ;

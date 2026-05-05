@@ -33,9 +33,11 @@ namespace Library_Borrowing_Books
             // Configure the HTTP request pipeline.
             if (app.Environment.IsDevelopment())
             {
-                app.MapOpenApi();
                 app.UseSwagger();
-                app.UseSwaggerUI();
+                app.UseSwaggerUI(options =>
+                {
+                    options.SwaggerEndpoint("/swagger/v1/swagger.json", "Library Borrowing Books API v1");
+                });
               
                 
                 using (var scope = app.Services.CreateScope())
@@ -44,9 +46,8 @@ namespace Library_Borrowing_Books
                     db.Database.Migrate();
                 }
             }
-          
-
-
+            app.UseCors("AllowAllOrigins");
+            app.UseAuthentication();
             app.UseAuthorization();
 
             app.MapControllers();

@@ -1,19 +1,15 @@
-﻿using Azure;
 using Data.Dtos;
-using Models.DTOs.Auth;
-using System;
-using System.Collections.Generic;
-using System.Linq;
-using System.Text;
-using System.Threading.Tasks;
+using Microsoft.AspNetCore.Identity;
+using Models.DTOs.User;
 
 namespace Service.Services.IServices
 {
     public interface IAuthService
     {
-        Task<string> RegisterAsync(RegisterDto registerDTO);
-        Task<LoginResponseDTO> LoginAsync(LoginDTO LoginDTO);
-
-
+        Task<UserDTO> RegisterAsync(RegisterDto registerDTO);
+        Task<LoginResultDto> LoginAsync(LoginDTO loginDTO);
+        Task SendForgotPasswordAsync(ForgotPasswordDto dto);
+        Task<IdentityResult> ResetPasswordAsync(ResetPasswordDto dto);
+        Task<IdentityResult> ConfirmEmailAsync(string userId, string token);
     }
 }
