@@ -66,6 +66,27 @@ namespace Service.Services
             return true;
         }
 
+        public async Task<bool> RenewBookAsync(int checkoutId)
+        {
+            var checkout = await _unitOfWork.Repository<Checkout>().GetTableAsTracking()
+                                .FirstOrDefaultAsync(c => c.CheckoutID == checkoutId);
+
+            if (checkout == null || checkout.ReturnDate != null)
+                return false;
+
+            if (checkout.IsRenewed)
+                return false;
+
+            if (checkout.DueDate < DateTime.UtcNow)
+                return false;
+
+            checkout.DueDate = checkout.DueDate.AddDays(7);
+            checkout.IsRenewed = true;
+
+            await _unitOfWork.SaveChangesAsync();
+            return true;
+        }
+
         public async Task<List<BorrowedBookResponseDto>> GetAllBorrowedBooksAsync()
         {
             var checkouts = await _unitOfWork.Repository<Checkout>().GetTableNoTracking()
@@ -90,6 +111,7 @@ namespace Service.Services
                                 .Where(c => c.UserID == userId && c.ReturnDate == null)
                                 .Include(c => c.BookCopy)
                                     .ThenInclude(bc => bc.Book)
+                                .Include(c => c.User)
                                 .ToListAsync();
 
             return checkouts.Select(c => new BorrowedBookResponseDto
@@ -97,7 +119,51 @@ namespace Service.Services
                 BookTitle = c.BookCopy.Book.Title,
                 UserName = c.User.UserName,
                 CheckoutDate = c.CheckoutDate,
-                DueDate = c.DueDate
+                DueDate = c.DueDate,
+                ReturnDate = c.ReturnDate,
+                IsOverdue = c.DueDate < DateTime.UtcNow,
+                FineAmount = c.FineAmount
+            }).ToList();
+        }
+
+        public async Task<List<BorrowedBookResponseDto>> GetBorrowHistoryByUserAsync(string userId)
+        {
+            var checkouts = await _unitOfWork.Repository<Checkout>().GetTableNoTracking()
+                                .Where(c => c.UserID == userId)
+                                .Include(c => c.BookCopy)
+                                    .ThenInclude(bc => bc.Book)
+                                .Include(c => c.User)
+                                .OrderByDescending(c => c.CheckoutDate)
+                                .ToListAsync();
+
+            return checkouts.Select(c => new BorrowedBookResponseDto
+            {
+                BookTitle = c.BookCopy.Book.Title,
+                UserName = c.User.UserName,
+                CheckoutDate = c.CheckoutDate,
+                DueDate = c.DueDate,
+                ReturnDate = c.ReturnDate,
+                IsOverdue = c.ReturnDate == null && c.DueDate < DateTime.UtcNow,
+                FineAmount = c.FineAmount
+            }).ToList();
+        }
+
+        public async Task<List<OverdueBookDto>> GetOverdueBooksAsync()
+        {
+            var now = DateTime.UtcNow;
+            var checkouts = await _unitOfWork.Repository<Checkout>().GetTableNoTracking()
+                                .Where(c => c.ReturnDate == null && c.DueDate < now)
+                                .Include(c => c.BookCopy)
+                                    .ThenInclude(bc => bc.Book)
+                                .Include(c => c.User)
+                                .ToListAsync();
+
+            return checkouts.Select(c => new OverdueBookDto
+            {
+                BookTitle = c.BookCopy.Book.Title,
+                UserName = c.User.UserName,
+                DueDate = c.DueDate,
+                DaysOverdue = (now.Date - c.DueDate.Date).Days
             }).ToList();
         }
     }

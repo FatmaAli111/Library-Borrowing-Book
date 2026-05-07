@@ -19,4 +19,5 @@ publish/
 # Others
 *.DS_Store
 *.env
+.json
 

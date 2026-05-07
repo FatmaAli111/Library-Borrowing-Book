@@ -58,5 +58,32 @@ namespace Library_Borrowing_Books.Api.Controllers
             return Ok(books);
         }
 
+        [HttpGet("GetBorrowHistoryByUser/{userId}")]
+        [Authorize(Roles = "Admin,User")]
+        public async Task<IActionResult> GetBorrowHistoryByUser(string userId)
+        {
+            var books = await borrowBookService.GetBorrowHistoryByUserAsync(userId);
+            return Ok(books);
+        }
+
+        [HttpGet("GetOverdueBooks")]
+        [Authorize(Roles = "Admin")]
+        public async Task<IActionResult> GetOverdueBooks()
+        {
+            var overdueBooks = await borrowBookService.GetOverdueBooksAsync();
+            return Ok(overdueBooks);
+        }
+
+        [HttpPost("RenewBook/{checkoutId}")]
+        [Authorize(Roles = "Admin,User")]
+        public async Task<IActionResult> RenewBook(int checkoutId)
+        {
+            var result = await borrowBookService.RenewBookAsync(checkoutId);
+            if (!result)
+                return BadRequest("Could not renew this checkout.");
+
+            return Ok("Book renewed successfully.");
+        }
+
     }
 }

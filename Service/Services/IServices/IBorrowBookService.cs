@@ -11,8 +11,11 @@ namespace Service.Services.IServices
     {
         Task<bool> BorrowBookAsync(BorrowBookDto dto);
         Task<bool> ReturnBookAsync(int checkoutId);
+        Task<bool> RenewBookAsync(int checkoutId);
         Task<List<BorrowedBookResponseDto>> GetAllBorrowedBooksAsync();
         Task<List<BorrowedBookResponseDto>> GetBorrowedBooksByUserAsync(string userId);
+        Task<List<BorrowedBookResponseDto>> GetBorrowHistoryByUserAsync(string userId);
+        Task<List<OverdueBookDto>> GetOverdueBooksAsync();
 
     }
 }
